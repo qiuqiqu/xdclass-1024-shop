@@ -51,6 +51,12 @@
             <version>2.0</version>
         </dependency>
         <!-- 代码自动生成依赖 end-->
+
+        <!--swagger ui接口文档依赖-->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-boot-starter</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

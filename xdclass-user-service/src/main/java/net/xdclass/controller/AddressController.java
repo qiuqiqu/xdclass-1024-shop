@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import net.xdclass.model.AddressDO;
 import net.xdclass.service.AddressService;
+import net.xdclass.util.JsonData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,7 +42,7 @@ public class AddressController {
 //            throw new BizException(-1,"测试自定义异常");
 //        }
 
-        return addressDO;
+        return JsonData.buildSuccess(addressDO);
     }
 
 }

@@ -5,6 +5,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import net.xdclass.enums.BizCodeEnum;
+import net.xdclass.request.UserLoginRequest;
 import net.xdclass.request.UserRegisterRequest;
 import net.xdclass.service.FileService;
 import net.xdclass.service.UserService;
@@ -60,6 +61,19 @@ public class UserController {
     public JsonData register(@ApiParam("用户注册对象") @RequestBody UserRegisterRequest registerRequest){
 
         JsonData jsonData = userService.register(registerRequest);
+        return jsonData;
+    }
+
+    /**
+     * 用户登录
+     * @return
+     */
+    @ApiOperation("用户登录")
+    @PostMapping("login")
+    public JsonData login(@ApiParam("用户登录对象") @RequestBody UserLoginRequest userLoginRequest){
+
+        JsonData jsonData = userService.login(userLoginRequest);
+
         return jsonData;
     }
 

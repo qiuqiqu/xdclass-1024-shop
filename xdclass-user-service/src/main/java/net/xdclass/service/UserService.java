@@ -2,6 +2,7 @@ package net.xdclass.service;
 
 import net.xdclass.model.UserDO;
 import com.baomidou.mybatisplus.extension.service.IService;
+import net.xdclass.request.UserLoginRequest;
 import net.xdclass.request.UserRegisterRequest;
 import net.xdclass.util.JsonData;
 
@@ -19,4 +20,6 @@ public interface UserService extends IService<UserDO> {
      * @return
      */
     JsonData register(UserRegisterRequest registerRequest);
+
+    JsonData login(UserLoginRequest loginRequest);
 }

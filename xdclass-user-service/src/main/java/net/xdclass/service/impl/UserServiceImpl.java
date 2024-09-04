@@ -6,11 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.SendCodeEnum;
 import net.xdclass.mapper.UserMapper;
+import net.xdclass.model.LoginUser;
 import net.xdclass.model.UserDO;
+import net.xdclass.request.UserLoginRequest;
 import net.xdclass.request.UserRegisterRequest;
 import net.xdclass.service.NotifyService;
 import net.xdclass.service.UserService;
 import net.xdclass.util.CommonUtil;
+import net.xdclass.util.JWTUtil;
 import net.xdclass.util.JsonData;
 import org.apache.commons.codec.digest.Md5Crypt;
 import org.apache.commons.lang3.StringUtils;
@@ -73,10 +76,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         //userDO.setPwd(registerRequest.getPwd());
 
         //生成秘钥 盐
-        userDO.setSecret("$1$"+ CommonUtil.getStringNumRandom(8));
+        userDO.setSecret("$1$" + CommonUtil.getStringNumRandom(8));
 
         // 密码+盐  处理
-        String cryptPwd= Md5Crypt.md5Crypt(registerRequest.getPwd().getBytes(),userDO.getSecret());
+        String cryptPwd = Md5Crypt.md5Crypt(registerRequest.getPwd().getBytes(), userDO.getSecret());
         userDO.setPwd(cryptPwd);
 
         //账号唯一性检查  TODO
@@ -90,6 +93,39 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             return JsonData.buildSuccess();
         } else {
             return JsonData.buildResult(BizCodeEnum.ACCOUNT_REPEAT);
+        }
+
+    }
+
+
+    /**
+     * 登录
+     *
+     * @param loginRequest
+     * @return
+     */
+    @Override
+    public JsonData login(UserLoginRequest loginRequest) {
+
+        List<UserDO> list = userMapper.selectList(
+                new QueryWrapper<UserDO>().eq("mail", loginRequest.getMail()));
+
+        if (list != null && list.size() == 1) {
+            UserDO userDO = list.get(0);
+            String cryptPwd = Md5Crypt.md5Crypt(loginRequest.getPwd().getBytes(), userDO.getSecret());
+            if (cryptPwd.equals(userDO.getPwd())) {
+                //生成token令牌
+                LoginUser loginUser=new LoginUser();
+                BeanUtils.copyProperties(userDO,loginUser);
+                String token = JWTUtil.geneJsonWebToken(loginUser);
+                log.info("{}登录成功",userDO.getMail());
+                return JsonData.buildSuccess(token);
+            }
+            //密码错误
+            return JsonData.buildResult(BizCodeEnum.ACCOUNT_PWD_ERROR);
+        } else {
+            //未注册
+            return JsonData.buildResult(BizCodeEnum.ACCOUNT_UNREGISTER);
         }
 
     }

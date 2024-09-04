@@ -35,8 +35,8 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, AddressDO> im
 
     @Override
     public AddressDO detail(Long id) {
-
-        AddressDO addressDO = addressMapper.selectOne(new QueryWrapper<AddressDO>().eq("id",id));
+        LoginUser loginUser = LoginInterceptor.threadLocal.get();
+        AddressDO addressDO = addressMapper.selectOne(new QueryWrapper<AddressDO>().eq("id",id).eq("user_id",loginUser.getId()));
 
         return addressDO;
     }
@@ -100,7 +100,8 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, AddressDO> im
      */
     @Override
     public int del(int addressId) {
-        int rows = addressMapper.delete(new QueryWrapper<AddressDO>().eq("id",addressId));
+        LoginUser loginUser = LoginInterceptor.threadLocal.get();
+        int rows = addressMapper.delete(new QueryWrapper<AddressDO>().eq("id",addressId).eq("user_id",loginUser.getId()));
         return rows;
     }
 }

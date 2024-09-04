@@ -5,14 +5,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import net.xdclass.model.AddressDO;
+import net.xdclass.request.AddressAddReqeust;
 import net.xdclass.service.AddressService;
 import net.xdclass.util.JsonData;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * <p>
@@ -43,6 +40,15 @@ public class AddressController {
 //        }
 
         return JsonData.buildSuccess(addressDO);
+    }
+
+    @ApiOperation("新增收货地址")
+    @PostMapping("add")
+    public JsonData add(@ApiParam("地址对象") @RequestBody AddressAddReqeust addressAddReqeust){
+
+        addressService.add(addressAddReqeust);
+
+        return JsonData.buildSuccess();
     }
 
 }

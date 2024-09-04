@@ -1,5 +1,6 @@
 package net.xdclass.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.enums.BizCodeEnum;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * <p>
@@ -73,7 +75,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         //生成秘钥 盐
         userDO.setSecret("$1$"+ CommonUtil.getStringNumRandom(8));
 
-        //密码加盐处理
+        // 密码+盐  处理
         String cryptPwd= Md5Crypt.md5Crypt(registerRequest.getPwd().getBytes(),userDO.getSecret());
         userDO.setPwd(cryptPwd);
 
@@ -100,7 +102,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
      */
     private boolean checkUnique(String mail) {
 
-        return true;
+        QueryWrapper queryWrapper = new QueryWrapper<UserDO>().eq("mail", mail);
+
+        List<UserDO> list = userMapper.selectList(queryWrapper);
+
+        return list.size() > 0 ? false : true;
     }
 
     /**

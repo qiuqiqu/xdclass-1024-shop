@@ -1,6 +1,7 @@
 package net.xdclass.interceptor;
 
 import io.jsonwebtoken.Claims;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.model.LoginUser;
@@ -29,32 +30,40 @@ public class LoginInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        String token = request.getHeader("token");
-        String accessToken = request.getParameter(token);
-        if (StringUtils.isNotBlank(accessToken)) {
+        String accessToken = request.getHeader("token");
+        if(accessToken == null) {
+            accessToken = request.getParameter("token");
+        }
+        if(StringUtils.isNotBlank(accessToken)){
             //不为空
-            //解密
             Claims claims = JWTUtil.checkJWT(accessToken);
-            if (claims == null) {
-                CommonUtil.sendJsonMessage(response, JsonData.buildResult(BizCodeEnum.ACCOUNT_UNLOGIN));
+            if(claims == null){
+                //未登录
+                CommonUtil.sendJsonMessage(response,JsonData.buildResult(BizCodeEnum.ACCOUNT_UNLOGIN));
                 return false;
             }
-            Long userId = Long.valueOf(claims.get("id").toString());
-            String headImg = (String) claims.get("head_img");
-            String name = (String) claims.get("name");
-            String mail = (String) claims.get("mail");
+
+            long userId = Long.valueOf(claims.get("id").toString());
+            String headImg = (String)claims.get("head_img");
+            String name = (String)claims.get("name");
+            String mail = (String)claims.get("mail");
+
 
             LoginUser loginUser = new LoginUser();
-            loginUser.setId(userId);
+
+            // protobuf
             loginUser.setName(name);
             loginUser.setHeadImg(headImg);
+            loginUser.setId(userId);
             loginUser.setMail(mail);
-
-            //通过threadLocal传递登录信息
             threadLocal.set(loginUser);
+
             return true;
+
         }
-        CommonUtil.sendJsonMessage(response, JsonData.buildResult(BizCodeEnum.ACCOUNT_UNLOGIN));
+
+
+        CommonUtil.sendJsonMessage(response,JsonData.buildResult(BizCodeEnum.ACCOUNT_UNLOGIN));
         return false;
     }
 

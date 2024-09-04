@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import net.xdclass.request.UserLoginRequest;
 import net.xdclass.request.UserRegisterRequest;
 import net.xdclass.util.JsonData;
+import net.xdclass.vo.UserVO;
 
 /**
  * <p>
@@ -21,5 +22,16 @@ public interface UserService extends IService<UserDO> {
      */
     JsonData register(UserRegisterRequest registerRequest);
 
+    /**
+     * 用户登录
+     * @param loginRequest
+     * @return
+     */
     JsonData login(UserLoginRequest loginRequest);
+
+    /**
+     * 查询个人信息详情
+     * @return
+     */
+    UserVO findUserDetail();
 }

@@ -34,7 +34,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Map<String, Object> pageCouponActivity(int page, int size) {
 
-        Page<CouponDO> pageInfo = new Page<>();
+        Page<CouponDO> pageInfo = new Page<>(page,size);
         IPage<CouponDO> couponDOIPage = couponMapper.selectPage(pageInfo, new QueryWrapper<CouponDO>()
                 .eq("publish", CouponPublishEnum.PUBLISH)  // 查询状态为发布的优惠券
                 .eq("category", CouponCategoryEnum.PROMOTION) //// 查询类别为促销的优惠券

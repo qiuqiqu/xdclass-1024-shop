@@ -21,12 +21,17 @@ import net.xdclass.util.JsonData;
 import net.xdclass.vo.CouponVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.jca.cci.core.support.CciDaoSupport;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +49,9 @@ public class CouponServiceImpl implements CouponService {
 
     @Autowired
     CouponRecordMapper couponRecordMapper;
+
+    @Autowired
+    StringRedisTemplate redisTemplate;
 
     @Override
     public Map<String, Object> pageCouponActivity(int page, int size) {
@@ -81,40 +89,66 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public JsonData addCoupon(long couponId, CouponCategoryEnum category) {
         LoginUser loginUser = LoginInterceptor.threadLocal.get();
-        CouponDO couponDO = couponMapper.selectOne(new QueryWrapper<CouponDO>()
-                .eq("id", couponId) //优惠卷id
-                .eq("category", category.name()));//优惠卷类型
 
-        if (couponDO==null){
-            throw  new BizException(BizCodeEnum.COUPON_NO_EXITS);
-        }
+        String lockKey="lock:coupon:"+couponId;
+        String uuid = CommonUtil.generateUUID();
+        Boolean lockFlag = redisTemplate.opsForValue().setIfAbsent(lockKey, uuid, Duration.ofSeconds(30));//抢锁
+        if (lockFlag){ //Ture 表示抢锁成功
+            log.info("加锁：{}",lockKey);
+            try {
+                //执行业务逻辑
+                CouponDO couponDO = couponMapper.selectOne(new QueryWrapper<CouponDO>()
+                        .eq("id", couponId) //优惠卷id
+                        .eq("category", category.name()));//优惠卷类型
 
-        //优惠券是否可以领取
-        this.checkCoupon(couponDO,loginUser.getId());
+                if (couponDO==null){
+                    throw  new BizException(BizCodeEnum.COUPON_NO_EXITS);
+                }
 
-        //构建领劵记录
-        CouponRecordDO couponRecordDO = new CouponRecordDO();
-        BeanUtils.copyProperties(couponDO,couponRecordDO);
-        couponRecordDO.setCreateTime(new Date());
-        couponRecordDO.setUseState(CouponStateEnum.NEW.name());
-        couponRecordDO.setUserId(loginUser.getId());
-        couponRecordDO.setUserName(loginUser.getName());
-        couponRecordDO.setCouponId(couponId);
-        couponRecordDO.setId(null);
+                //优惠券是否可以领取
+                this.checkCoupon(couponDO,loginUser.getId());
 
+                //构建领劵记录
+                CouponRecordDO couponRecordDO = new CouponRecordDO();
+                BeanUtils.copyProperties(couponDO,couponRecordDO);
+                couponRecordDO.setCreateTime(new Date());
+                couponRecordDO.setUseState(CouponStateEnum.NEW.name());
+                couponRecordDO.setUserId(loginUser.getId());
+                couponRecordDO.setUserName(loginUser.getName());
+                couponRecordDO.setCouponId(couponId);
+                couponRecordDO.setId(null);
 
-        //扣减库存  TODO
-        int rows = 1; //couponMapper.reduceStock(couponId);
+                //扣减库存
+                int rows = couponMapper.reduceStock(couponId);
 
-        if(rows==1){
-            //库存扣减成功才保存记录
-            couponRecordMapper.insert(couponRecordDO);
+                if(rows==1){
+                    //库存扣减成功才保存记录
+                    couponRecordMapper.insert(couponRecordDO);
+
+                }else {
+                    log.warn("发放优惠券失败:{},用户:{}",couponDO,loginUser);
+
+                    throw  new BizException(BizCodeEnum.COUPON_NO_STOCK);
+                }
+            }finally {
+                //使用 lua 脚本释放锁   调用删除操作返回1，否则返回0
+                String script = "if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end";
+
+                //Arrays.asList(lockKey)是key列表，uuid是参数
+                Integer result = redisTemplate.execute(new DefaultRedisScript<>(script, Integer.class), Arrays.asList(lockKey), uuid);
+            }
 
         }else {
-            log.warn("发放优惠券失败:{},用户:{}",couponDO,loginUser);
+            //加锁失败，睡眠100毫秒，自旋重试
+            try {
+                TimeUnit.MILLISECONDS.sleep(100L);
+            } catch (InterruptedException e) { }
+            return addCoupon( couponId, category);
 
-            throw  new BizException(BizCodeEnum.COUPON_NO_STOCK);
         }
+
+
+
 
         return JsonData.buildSuccess();
 

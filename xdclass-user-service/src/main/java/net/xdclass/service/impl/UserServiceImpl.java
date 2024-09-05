@@ -61,7 +61,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         boolean checkCode = false;
 
         if (StringUtils.isNotBlank(registerRequest.getMail())) {
-            //校验验证码
+            //校验邮箱验证码
             checkCode = notifyService.checkCode(SendCodeEnum.USER_REGISTER, registerRequest.getMail(), registerRequest.getCode());
         }
         if (!checkCode) {

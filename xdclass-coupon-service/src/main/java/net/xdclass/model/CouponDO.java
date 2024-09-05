@@ -48,24 +48,9 @@ public class CouponDO implements Serializable {
     private String couponTitle;
 
     /**
-     * 抵扣价格
-     */
-    private BigDecimal price;
-
-    /**
-     * 每人限制张数
+     * 每人限制张数-----
      */
     private Integer userLimit;
-
-    /**
-     * 优惠券开始有效时间
-     */
-    private Date startTime;
-
-    /**
-     * 优惠券失效时间
-     */
-    private Date endTime;
 
     /**
      * 优惠券总量
@@ -77,12 +62,29 @@ public class CouponDO implements Serializable {
      */
     private Integer stock;
 
-    private Date createTime;
+    /**
+     * 抵扣价格-----()
+     */
+    private BigDecimal price;
 
     /**
-     * 满多少才可以使用
+     * 满多少才可以使用---()
      */
     private BigDecimal conditionPrice;
 
+    /**
+     * 创建时间获得时间---()
+     */
+    private Date createTime;
+
+    /**
+     * 开始时间----()
+     */
+    private Date startTime;
+
+    /**
+     * 结束时间---()
+     */
+    private Date endTime;
 
 }

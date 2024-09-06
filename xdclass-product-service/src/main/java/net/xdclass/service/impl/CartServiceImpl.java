@@ -13,6 +13,7 @@ import net.xdclass.service.CartService;
 import net.xdclass.service.ProductService;
 import net.xdclass.util.JsonData;
 import net.xdclass.vo.CartItemVO;
+import net.xdclass.vo.CartVO;
 import net.xdclass.vo.ProductVO;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,12 @@ import org.springframework.data.redis.core.BoundHashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.DeleteMapping;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -36,6 +43,10 @@ public class CartServiceImpl implements CartService {
     private RedisTemplate redisTemplate;
 
 
+    /**
+     * 添加商品到购物车(已 JSON 的格式保存)
+     * @param cartItemRequest
+     */
     @Override
     public void addToCart(CartItemRequest cartItemRequest) {
 
@@ -87,6 +98,79 @@ public class CartServiceImpl implements CartService {
 
     }
 
+    /**
+     * 查看我的购物车
+     * @return
+     */
+    @Override
+    public CartVO getMyCart() {
+        //获取购物车里全部购物项
+        List<CartItemVO> cartItemVOList = buildCartItem(false);
+
+        //封装成cartvo
+        CartVO cartVO = new CartVO();
+        cartVO.setCartItems(cartItemVOList);
+
+        return cartVO;
+    }
+
+    /**
+     * 获取最新的购物项
+     * @param latestPrice 是否获取最新价格
+     * @return
+     */
+    private List<CartItemVO> buildCartItem(boolean latestPrice) {
+        BoundHashOperations<String,Object,Object> myCart = getMyCartOps();
+
+        //获取购物车中所有的商品
+        List<Object> itemList = myCart.values();
+
+        //用于保存最终的购物车商品列表
+        List<CartItemVO> cartItemVOList = new ArrayList<>();
+
+        //拼接id列表查询最新价格
+        List<Long> productIdList = new ArrayList<>();
+
+        for(Object item: itemList){
+            CartItemVO cartItemVO = JSON.parseObject((String)item,CartItemVO.class);
+            cartItemVOList.add(cartItemVO);
+
+            productIdList.add(cartItemVO.getProductId());
+        }
+
+        //查询最新的商品价格
+        if(latestPrice){
+            setProductLatestPrice(cartItemVOList,productIdList);
+        }
+
+        return cartItemVOList;
+    }
+
+    /**
+     * 设置商品最新价格
+     * @param cartItemVOList
+     * @param productIdList
+     */
+    private void setProductLatestPrice(List<CartItemVO> cartItemVOList, List<Long> productIdList) {
+
+        //批量查询
+        List<ProductVO> productVOList = productService.findProductsByIdBatch(productIdList);
+
+        //分组
+        Map<Long,ProductVO> maps = productVOList.stream().collect(Collectors.toMap(ProductVO::getId, Function.identity()));
+
+
+        cartItemVOList.stream().forEach(item->{
+
+            ProductVO productVO = maps.get(item.getProductId());
+            item.setProductTitle(productVO.getTitle());
+            item.setProductImg(productVO.getCoverImg());
+            item.setAmount(productVO.getAmount());
+
+        });
+
+
+    }
 
     /**
      * * Map<String,Map<String,String>>  购物车 双层 map 结构

@@ -1,6 +1,7 @@
 package net.xdclass.service;
 
 import net.xdclass.request.CartItemRequest;
+import net.xdclass.vo.CartVO;
 
 public interface CartService {
 
@@ -14,4 +15,10 @@ public interface CartService {
      * 清空购物车
      */
     void clear();
+
+    /**
+     * chak我的购物车
+     * @return
+     */
+    CartVO getMyCart();
 }

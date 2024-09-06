@@ -9,4 +9,9 @@ public interface CartService {
      * @param cartItemRequest
      */
     void addToCart(CartItemRequest cartItemRequest);
+
+    /**
+     * 清空购物车
+     */
+    void clear();
 }

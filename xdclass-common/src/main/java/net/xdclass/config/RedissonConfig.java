@@ -6,6 +6,10 @@ import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 public class RedissonConfig {
@@ -38,5 +42,24 @@ public class RedissonConfig {
         RedissonClient redisson = Redisson.create(config);
 
         return redisson;
+    }
+
+    /**
+     * 避免存储的key乱码，hash结构依旧会乱码
+     * @param factory
+     * @return
+     */
+    @Bean
+    public RedisTemplate<String,Object> redisTemplate(RedisConnectionFactory factory){
+
+        RedisTemplate<String,Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(factory);
+
+        RedisSerializer redisSerializer = new StringRedisSerializer();
+
+        redisTemplate.setKeySerializer(redisSerializer);
+        redisTemplate.setValueSerializer(redisSerializer);
+
+        return redisTemplate;
     }
 }

@@ -1,6 +1,7 @@
 package net.xdclass.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.constant.CacheKey;
 import net.xdclass.enums.BizCodeEnum;
@@ -10,6 +11,7 @@ import net.xdclass.model.LoginUser;
 import net.xdclass.request.CartItemRequest;
 import net.xdclass.service.CartService;
 import net.xdclass.service.ProductService;
+import net.xdclass.util.JsonData;
 import net.xdclass.vo.CartItemVO;
 import net.xdclass.vo.ProductVO;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.BoundHashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 /**
  *
@@ -70,6 +73,17 @@ public class CartServiceImpl implements CartService {
             cartItem.setBuyNum(cartItem.getBuyNum()+buyNum);
             myCart.put(productId,JSON.toJSONString(cartItem));
         }
+
+    }
+
+    /**
+     * 清空购物车
+     */
+    @Override
+    public void clear() {
+
+        String cartKey = getCartKey();
+        redisTemplate.delete(cartKey);
 
     }
 

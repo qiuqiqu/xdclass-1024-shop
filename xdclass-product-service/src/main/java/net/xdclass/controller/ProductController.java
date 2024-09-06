@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 /**
- *
+ * 商品模块
  */
 @Api("商品模块")
 @RestController

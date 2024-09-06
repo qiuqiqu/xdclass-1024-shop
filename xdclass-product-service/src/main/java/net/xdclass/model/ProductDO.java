@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- *
+ * 产品
  */
 @Data
 @EqualsAndHashCode(callSuper = false)

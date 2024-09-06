@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
 
 /**
- *
+ * 产品
  */
 @Data
 @EqualsAndHashCode(callSuper = false)

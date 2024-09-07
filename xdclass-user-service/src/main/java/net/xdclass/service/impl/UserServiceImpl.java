@@ -5,10 +5,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.SendCodeEnum;
+import net.xdclass.feign.CouponFeignService;
 import net.xdclass.interceptor.LoginInterceptor;
 import net.xdclass.mapper.UserMapper;
 import net.xdclass.model.LoginUser;
 import net.xdclass.model.UserDO;
+import net.xdclass.request.NewUserCouponRequest;
 import net.xdclass.request.UserLoginRequest;
 import net.xdclass.request.UserRegisterRequest;
 import net.xdclass.service.NotifyService;
@@ -36,6 +38,9 @@ import java.util.List;
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements UserService {
+
+    @Autowired
+    CouponFeignService couponFeignService;
 
     @Autowired
     private NotifyService notifyService;
@@ -168,6 +173,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
      * @param userDO
      */
     private void userRegisterInitTask(UserDO userDO) {
-
+        NewUserCouponRequest newUserCouponRequest = new NewUserCouponRequest();
+        newUserCouponRequest.setUserId(userDO.getId());
+        newUserCouponRequest.setName(userDO.getName());
+        couponFeignService.addNewUserCoupon(newUserCouponRequest);
     }
 }

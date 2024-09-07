@@ -60,6 +60,7 @@ public class CouponController {
     @PostMapping("/new_user_coupon")
     public JsonData addNewUserCoupon( @ApiParam("用户对象") @RequestBody NewUserCouponRequest newUserCouponRequest ){
 
+        System.out.println("新人有优惠券成功");
         JsonData jsonData = couponService.initNewUserCoupon(newUserCouponRequest);
 
         return jsonData;

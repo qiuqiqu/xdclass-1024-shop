@@ -156,6 +156,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(rollbackFor=Exception.class,propagation=Propagation.REQUIRED)
     @Override
     public JsonData initNewUserCoupon(NewUserCouponRequest newUserCouponRequest) {
+        System.out.println("成功成功成功");
         LoginUser loginUser = new LoginUser();
         loginUser.setId(newUserCouponRequest.getUserId());
         loginUser.setName(newUserCouponRequest.getName());

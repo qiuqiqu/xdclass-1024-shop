@@ -34,7 +34,7 @@ public class MailServiceImpl implements MailService {
      * @param content 内容
      */
     @Override
-    public void sendSimpleMail(String to, String subject, String content) {
+    public void sendMail(String to, String subject, String content) {
         //创建SimpleMailMessage对象
         SimpleMailMessage message = new SimpleMailMessage();
         //邮件发送人

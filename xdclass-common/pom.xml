@@ -42,7 +42,7 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-generator</artifactId>
-            <version>3.4.1</version>
+            <version>3.5.1</version>
         </dependency>
         <!-- velocity -->
         <dependency>
@@ -104,11 +104,22 @@
             <version>3.10.1</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.alibaba/fastjson 引入阿里巴巴cloud后自带，TODO 可以删除这个包 -->
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.alibaba/fastjson 引入阿里巴巴cloud后自带，TODO 可以删除这个包 &ndash;&gt;
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>1.2.75</version>
+        </dependency>-->
+
+        <!--添加nacos客户端-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+        <!--Feign远程调用-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
     </dependencies>
 

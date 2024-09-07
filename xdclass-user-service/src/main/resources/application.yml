@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: xdclass-user-service
+  cloud:
+    #注册中心地址
+    nacos:
+      discovery:
+        server-addr: 115.159.219.173:8848
+
 
   #数据库配置
   datasource:
@@ -45,3 +51,10 @@ aliyun:
     access-key-id: LTAI5t7BHkVbEKLq4spBjN8V
     access-key-secret: 4bW4qn17H23Bp6hV4zEdA9ze66Nex8
     bucketname: gy-xdclass-1024shop-img
+
+#暴露所有监控点
+management:
+  endpoints:
+  web:
+  exposure:
+include: '*'

@@ -205,7 +205,7 @@ public class CouponServiceImpl implements CouponService {
         }
 
         //用户是否超过限制
-        int recordNum = couponRecordMapper.selectCount(new QueryWrapper<CouponRecordDO>()
+        Long recordNum = couponRecordMapper.selectCount(new QueryWrapper<CouponRecordDO>()
                 .eq("coupon_id", couponDO.getId())
                 .eq("user_id", userId));
 

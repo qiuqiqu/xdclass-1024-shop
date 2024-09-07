@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: xdclass-order-service
+  cloud:
+    #注册中心地址
+    nacos:
+      discovery:
+        server-addr: 115.159.219.173:8848
 
 #数据库配置
   datasource:

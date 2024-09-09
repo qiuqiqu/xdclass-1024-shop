@@ -62,7 +62,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
      * @return
      */
     @Override
-    @GlobalTransactional //开启分布式事物
+    //@GlobalTransactional //开启分布式事物
     public JsonData register(UserRegisterRequest registerRequest) {
 
         boolean checkCode = false;

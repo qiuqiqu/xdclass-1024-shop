@@ -4,16 +4,42 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="net.xdclass.model.CouponTaskDO">
-        <id column="id" property="id" />
-        <result column="coupon_record_id" property="couponRecordId" />
-        <result column="create_time" property="createTime" />
-        <result column="out_trade_no" property="outTradeNo" />
-        <result column="lock_state" property="lockState" />
+        <id column="id" property="id"/>
+        <result column="coupon_record_id" property="couponRecordId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="out_trade_no" property="outTradeNo"/>
+        <result column="lock_state" property="lockState"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id, coupon_record_id, create_time, out_trade_no, lock_state
     </sql>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List_No_Id">
+        coupon_record_id, create_time, out_trade_no, lock_state
+    </sql>
+
+    <!--批量插入-->
+    <insert id="insertBatch" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
+
+        insert into coupon_task
+        (
+        <include refid="Base_Column_List_No_Id"/>
+        )
+
+        values
+
+        <foreach collection="couponTaskList" item="item" index="index" separator=",">
+            (
+            #{item.couponRecordId},
+            #{item.createTime},
+            #{item.outTradeNo},
+            #{item.lockState}
+            )
+        </foreach>
+
+    </insert>
 
 </mapper>

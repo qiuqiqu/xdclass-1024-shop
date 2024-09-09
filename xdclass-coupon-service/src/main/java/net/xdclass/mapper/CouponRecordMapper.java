@@ -3,6 +3,9 @@ package net.xdclass.mapper;
 import net.xdclass.model.CouponRecordDO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -12,4 +15,11 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface CouponRecordMapper extends BaseMapper<CouponRecordDO> {
 
+    /**
+     * 批量更新优惠券使用记录
+     * @param userId
+     * @param useState
+     * @param lockCouponRecordIds
+     */
+    int lockUseStateBatch(@Param("userId") Long userId,@Param("useState") String useState,@Param("lockCouponRecordIds") List<Long> lockCouponRecordIds);
 }

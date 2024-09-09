@@ -4,23 +4,34 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="net.xdclass.model.CouponRecordDO">
-        <id column="id" property="id" />
-        <result column="coupon_id" property="couponId" />
-        <result column="create_time" property="createTime" />
-        <result column="use_state" property="useState" />
-        <result column="user_id" property="userId" />
-        <result column="user_name" property="userName" />
-        <result column="coupon_title" property="couponTitle" />
-        <result column="start_time" property="startTime" />
-        <result column="end_time" property="endTime" />
-        <result column="order_id" property="orderId" />
-        <result column="price" property="price" />
-        <result column="condition_price" property="conditionPrice" />
+        <id column="id" property="id"/>
+        <result column="coupon_id" property="couponId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="use_state" property="useState"/>
+        <result column="user_id" property="userId"/>
+        <result column="user_name" property="userName"/>
+        <result column="coupon_title" property="couponTitle"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="order_id" property="orderId"/>
+        <result column="price" property="price"/>
+        <result column="condition_price" property="conditionPrice"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id, coupon_id, create_time, use_state, user_id, user_name, coupon_title, start_time, end_time, order_id, price, condition_price
     </sql>
+
+    <!--批量锁定优惠券记录-->
+    <update id="lockUseStateBatch">
+
+        update coupon_record set use_state=#{useState} where user_id=#{userId} and use_state='NEW'
+        and id in
+        <foreach collection="lockCouponRecordIds" index="index" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+
+    </update>
 
 </mapper>

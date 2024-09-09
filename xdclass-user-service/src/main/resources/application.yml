@@ -53,11 +53,11 @@ aliyun:
     bucketname: gy-xdclass-1024shop-img
 
 
-#seata配置
-seata:
-  tx-service-group: ${spring.application.name}-group
-  service:
-    grouplist:
-      xdclass: 127.0.0.1:8091
-    vgroup-mapping:
-      xdclass-user-service-group: xdclass
+##seata配置
+#seata:
+#  tx-service-group: ${spring.application.name}-group
+#  service:
+#    grouplist:
+#      xdclass: 127.0.0.1:8091
+#    vgroup-mapping:
+#      xdclass-user-service-group: xdclass

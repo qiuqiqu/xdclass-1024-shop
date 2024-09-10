@@ -4,18 +4,21 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
+import net.xdclass.config.RabbitMQConfig;
 import net.xdclass.enums.BizCodeEnum;
 import net.xdclass.enums.StockTaskStateEnum;
 import net.xdclass.exception.BizException;
 import net.xdclass.mapper.ProductMapper;
 import net.xdclass.mapper.ProductTaskMapper;
 import net.xdclass.model.ProductDO;
+import net.xdclass.model.ProductMessage;
 import net.xdclass.model.ProductTaskDO;
 import net.xdclass.request.LockProductRequest;
 import net.xdclass.request.OrderItemRequest;
 import net.xdclass.service.ProductService;
 import net.xdclass.util.JsonData;
 import net.xdclass.vo.ProductVO;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,6 +42,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     ProductTaskMapper productTaskMapper;
+
+    @Autowired
+    RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    RabbitMQConfig rabbitMQConfig;
+
     /**
      * 商品分页
      *
@@ -120,7 +130,7 @@ public class ProductServiceImpl implements ProductService {
             //锁定商品库存
             int rows = productMapper.lockProductStock(orderItem.getProductId(), orderItem.getBuyNum());
 
-            if (rows==1){ //将商品的锁定的信息插入 product_task 表中
+            if (rows == 1) { //将商品的锁定的信息插入 product_task 表中
                 ProductVO productVO = productMap.get(orderItem.getProductId());
                 ProductTaskDO productTaskDO = new ProductTaskDO();
 
@@ -136,11 +146,15 @@ public class ProductServiceImpl implements ProductService {
                 productTaskDO.setOutTradeNo(orderOutTradeNo);
 
                 int insert = productTaskMapper.insert(productTaskDO);
+                log.info("将商品的锁定的信息插入 product_task 表中成功:{}", productTaskDO);
+                // 发送MQ延迟消息，介绍商品库存
+                ProductMessage productMessage = new ProductMessage();
+                productMessage.setOutTradeNo(orderOutTradeNo);
+                productMessage.setTaskId(productTaskDO.getId());
 
-                // 发送MQ延迟消息，介绍商品库存  TODO
-
-
-            }else {
+                rabbitTemplate.convertAndSend(rabbitMQConfig.getEventExchange(), rabbitMQConfig.getStockReleaseDelayRoutingKey(), productMessage);
+                log.info("商品库存锁定信息发送成功:{}", productMessage);
+            } else {
                 throw new BizException(BizCodeEnum.ORDER_CONFIRM_LOCK_PRODUCT_FAIL);
             }
         }

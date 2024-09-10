@@ -111,7 +111,7 @@ public class CouponRecordServiceImpl implements CouponRecordService {
         List<Long> lockCouponRecordIds = recordRequest.getLockCouponRecordIds();
         String orderOutTradeNo = recordRequest.getOrderOutTradeNo();
 
-        //锁定优惠券记录
+        //锁定优惠券记录 (批量更新优惠券状态)
         int updateRows = couponRecordMapper.lockUseStateBatch(loginUser.getId(), CouponStateEnum.USED.name(), lockCouponRecordIds);
 
         //task表插入记录
@@ -157,14 +157,14 @@ public class CouponRecordServiceImpl implements CouponRecordService {
     @Override
     @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRED)
     public boolean releaseCouponRecord(CouponRecordMessage recordMessage) {
-        CouponTaskDO taskDO = couponTaskMapper.selectOne(new QueryWrapper<CouponTaskDO>().eq("id", recordMessage.getTaskId()));
-        if (taskDO == null) {
+        CouponTaskDO couponTaskDO = couponTaskMapper.selectOne(new QueryWrapper<CouponTaskDO>().eq("id", recordMessage.getTaskId()));
+        if (couponTaskDO == null) {
             //不用处理
             log.info("工作单不存在,消息:{}", recordMessage);
             return true;
         }
         //工作单存在且状态是 LOCK 才处理
-        if (taskDO.getLockState().equals(StockTaskStateEnum.LOCK.name())) {
+        if (couponTaskDO.getLockState().equals(StockTaskStateEnum.LOCK.name())) {
             //工作单的状态是 LOCK
             JsonData jsonData = productOrderFeignSerivce.queryProductOrderState(recordMessage.getOutTradeNo());
             Integer code = jsonData.getCode();
@@ -180,8 +180,8 @@ public class CouponRecordServiceImpl implements CouponRecordService {
                 //如果订单状态已支付
                 if (ProductOrderStateEnum.PAY.name().equals(state)){
                     //如果订单状态已支付,将 task 的状态由 LOCK 改为 FINISH
-                    taskDO.setLockState(StockTaskStateEnum.FINISH.name());
-                    couponTaskMapper.update(taskDO,new QueryWrapper<CouponTaskDO>().eq("id",recordMessage.getTaskId()));
+                    couponTaskDO.setLockState(StockTaskStateEnum.FINISH.name());
+                    couponTaskMapper.update(couponTaskDO,new QueryWrapper<CouponTaskDO>().eq("id",recordMessage.getTaskId()));
                     log.info("订单已经支付，修改库存锁定工作单FINISH状态:{}",recordMessage);
                     return true;
                 }
@@ -189,16 +189,16 @@ public class CouponRecordServiceImpl implements CouponRecordService {
 
             //订单不存在，或者订单被取消，确认消息,修改task状态为CANCEL,恢复优惠券使用记录为NEW
             log.warn("订单不存在，或者订单被取消，确认消息,修改task状态为CANCEL,恢复优惠券使用记录为NEW,message:{}",recordMessage);
-            taskDO.setLockState(StockTaskStateEnum.CANCEL.name());
-            couponTaskMapper.update(taskDO,new QueryWrapper<CouponTaskDO>().eq("id",recordMessage.getTaskId()));
+            couponTaskDO.setLockState(StockTaskStateEnum.CANCEL.name());
+            couponTaskMapper.update(couponTaskDO,new QueryWrapper<CouponTaskDO>().eq("id",recordMessage.getTaskId()));
 
             //恢复优惠券记录是NEW状态
-            couponRecordMapper.updateState(taskDO.getCouponRecordId(),CouponStateEnum.NEW.name());
+            couponRecordMapper.updateState(couponTaskDO.getCouponRecordId(),CouponStateEnum.NEW.name());
 
             return true;
 
         } else {
-            log.info("工作单状态不是 lock,消息体:{}", taskDO.getLockState(), recordMessage);
+            log.info("工作单状态不是 lock,消息体:{}", couponTaskDO.getLockState(), recordMessage);
             return true;
         }
     }

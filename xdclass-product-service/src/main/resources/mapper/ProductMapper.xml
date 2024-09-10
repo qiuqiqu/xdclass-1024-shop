@@ -28,4 +28,11 @@
           and stock - lock_stock >= #{buyNum}
     </update>
 
+    <!--解锁商品库存-->
+    <update id="unlockProductStock">
+
+        update  product set lock_stock = lock_stock-#{buyNum} where id = #{productId}
+
+    </update>
+
 </mapper>

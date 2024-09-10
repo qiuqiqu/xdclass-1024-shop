@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.config.RabbitMQConfig;
 import net.xdclass.enums.BizCodeEnum;
+import net.xdclass.enums.ProductOrderStateEnum;
 import net.xdclass.enums.StockTaskStateEnum;
 import net.xdclass.exception.BizException;
+import net.xdclass.feign.ProductOrderFeignSerivce;
 import net.xdclass.mapper.ProductMapper;
 import net.xdclass.mapper.ProductTaskMapper;
 import net.xdclass.model.ProductDO;
@@ -48,6 +50,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     RabbitMQConfig rabbitMQConfig;
+
+    @Autowired
+    ProductOrderFeignSerivce orderFeignSerivce;
 
     /**
      * 商品分页
@@ -107,7 +112,7 @@ public class ProductServiceImpl implements ProductService {
 
     /**
      * 商品库存锁定
-     * <p>
+     *
      * 1)遍历商品，锁定每个商品购买数量
      * 2)每一次锁定的时候，都要发送延迟消息
      *
@@ -159,6 +164,62 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         return JsonData.buildSuccess();
+    }
+
+
+
+    /**
+     * 释放商品库存
+     * @param productMessage
+     * @return
+     */
+    @Override
+    public boolean releaseProductStock(ProductMessage productMessage) {
+        //查询工作单状态
+        ProductTaskDO taskDO = productTaskMapper.selectOne(new QueryWrapper<ProductTaskDO>().eq("id",productMessage.getTaskId()));
+        if(taskDO == null){
+            log.warn("工作单不存在，消息体为:{}",productMessage);
+        }
+
+        //lock状态才处理
+        if(taskDO.getLockState().equalsIgnoreCase(StockTaskStateEnum.LOCK.name())){
+
+            //查询订单状态
+            JsonData jsonData = orderFeignSerivce.queryProductOrderState(productMessage.getOutTradeNo());
+            String state = jsonData.getData().toString();
+
+            if(jsonData.getCode() == 0){
+                if(ProductOrderStateEnum.NEW.name().equalsIgnoreCase(state)){
+                    //状态是NEW新建状态，则返回给消息队，列重新投递
+                    log.warn("订单状态是NEW,返回给消息队列，重新投递:{}",productMessage);
+                    return false;
+                }
+
+                //如果是已经支付
+                if(ProductOrderStateEnum.PAY.name().equalsIgnoreCase(state)){
+                    //如果已经支付，修改task状态为finish
+                    taskDO.setLockState(StockTaskStateEnum.FINISH.name());
+                    productTaskMapper.update(taskDO,new QueryWrapper<ProductTaskDO>().eq("id",productMessage.getTaskId()));
+                    log.info("订单已经支付，修改库存锁定工作单FINISH状态:{}",productMessage);
+                    return true;
+                }
+            }
+
+            //订单不存在，或者订单被取消，确认消息,修改task状态为CANCEL,恢复优惠券使用记录为NEW
+            log.warn("订单不存在，或者订单被取消，确认消息,修改task状态为CANCEL,恢复商品库存,message:{}",productMessage);
+            taskDO.setLockState(StockTaskStateEnum.CANCEL.name());
+            productTaskMapper.update(taskDO,new QueryWrapper<ProductTaskDO>().eq("id",productMessage.getTaskId()));
+
+
+            //恢复商品库存，集锁定库存的值减去当前购买的值
+            productMapper.unlockProductStock(taskDO.getProductId(),taskDO.getBuyNum());
+
+            return true;
+
+        } else {
+            log.warn("工作单状态不是LOCK,state={},消息体={}",taskDO.getLockState(),productMessage);
+            return true;
+        }
     }
 
 

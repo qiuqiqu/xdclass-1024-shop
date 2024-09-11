@@ -1,7 +1,10 @@
 package net.xdclass.service;
 
 import net.xdclass.request.CartItemRequest;
+import net.xdclass.vo.CartItemVO;
 import net.xdclass.vo.CartVO;
+
+import java.util.List;
 
 public interface CartService {
 
@@ -33,4 +36,11 @@ public interface CartService {
      * @param cartItemRequest
      */
     void changeItemNum(CartItemRequest cartItemRequest);
+
+    /**
+     * 确认购物车商品信息
+     * @param productIdList
+     * @return
+     */
+    List<CartItemVO> confirmOrderCartItems(List<Long> productIdList);
 }

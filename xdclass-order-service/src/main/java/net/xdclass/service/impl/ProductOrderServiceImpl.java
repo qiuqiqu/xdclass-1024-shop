@@ -14,6 +14,9 @@ import net.xdclass.mapper.ProductOrderMapper;
 import net.xdclass.model.LoginUser;
 import net.xdclass.model.ProductOrderDO;
 import net.xdclass.request.ConfirmOrderRequest;
+import net.xdclass.request.LockCouponRecordRequest;
+import net.xdclass.request.LockProductRequest;
+import net.xdclass.request.OrderItemRequest;
 import net.xdclass.service.ProductOrderService;
 import net.xdclass.util.CommonUtil;
 import net.xdclass.util.JsonData;
@@ -24,7 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -84,7 +89,70 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
         //验证价格，减去商品优惠券
         this.checkPrice(orderItemList,orderRequest);
+
+        //锁定优惠券
+        this.lockCouponRecords(orderRequest ,orderOutTradeNo );
+
+        //锁定库存
+        this.lockProductStocks(orderItemList,orderOutTradeNo);
+
+
+        //创建订单  TODO
+
+
+        //创建支付  TODO
         return null;
+    }
+
+    /**
+     * 锁定优惠券
+     * @param orderRequest
+     * @param orderOutTradeNo
+     */
+    private void lockCouponRecords(ConfirmOrderRequest orderRequest, String orderOutTradeNo) {
+        List<Long> lockCouponRecordIds = new ArrayList<>();
+        if(orderRequest.getCouponRecordId()>0){
+            lockCouponRecordIds.add(orderRequest.getCouponRecordId());
+
+            LockCouponRecordRequest lockCouponRecordRequest = new LockCouponRecordRequest();
+            lockCouponRecordRequest.setOrderOutTradeNo(orderOutTradeNo);
+            lockCouponRecordRequest.setLockCouponRecordIds(lockCouponRecordIds);
+
+            //发起锁定优惠券请求
+            JsonData jsonData = couponFeignSerivce.lockCouponRecords(lockCouponRecordRequest);
+            if(jsonData.getCode()!=0){
+                throw new BizException(BizCodeEnum.COUPON_RECORD_LOCK_FAIL);
+            }
+        }
+
+    }
+
+
+    /**
+     * 锁定商品库存
+     * @param orderItemList
+     * @param orderOutTradeNo
+     */
+    private void lockProductStocks(List<OrderItemVO> orderItemList, String orderOutTradeNo) {
+
+        List<OrderItemRequest> itemRequestList = orderItemList.stream().map(obj->{
+
+            OrderItemRequest request = new OrderItemRequest();
+            request.setBuyNum(obj.getBuyNum());
+            request.setProductId(obj.getProductId());
+            return request;
+        }).collect(Collectors.toList());
+
+
+        LockProductRequest lockProductRequest = new LockProductRequest();
+        lockProductRequest.setOrderOutTradeNo(orderOutTradeNo);
+        lockProductRequest.setOrderItemList(itemRequestList);
+
+        JsonData jsonData = productFeignService.lockProductStock(lockProductRequest);
+        if(jsonData.getCode()!=0){
+            log.error("锁定商品库存失败：{}",lockProductRequest);
+            throw new BizException(BizCodeEnum.ORDER_CONFIRM_LOCK_PRODUCT_FAIL);
+        }
     }
 
     /**

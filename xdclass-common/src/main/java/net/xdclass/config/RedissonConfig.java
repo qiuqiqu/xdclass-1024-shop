@@ -1,5 +1,7 @@
 package net.xdclass.config;
 
+import feign.RequestInterceptor;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -10,8 +12,13 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import javax.servlet.http.HttpServletRequest;
 
 @Configuration
+@Slf4j
 public class RedissonConfig {
 
     @Value("${spring.redis.host}")
@@ -61,5 +68,22 @@ public class RedissonConfig {
         redisTemplate.setValueSerializer(redisSerializer);
 
         return redisTemplate;
+    }
+
+    @Bean("requestInterceptor")
+    public RequestInterceptor requestInterceptor(){
+        return template -> {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if(attributes!=null){
+                HttpServletRequest request = attributes.getRequest();
+                if (null == request){
+                    return;
+                }
+                log.info(request.getHeaderNames().toString());
+                template.header("token", request.getHeader("token"));
+            }else {
+                log.warn("requestInterceptor获取Header空指针异常");
+            }
+        };
     }
 }

@@ -1,6 +1,7 @@
 package net.xdclass.service;
 
 
+import net.xdclass.model.OrderMessage;
 import net.xdclass.request.ConfirmOrderRequest;
 import net.xdclass.util.JsonData;
 
@@ -18,4 +19,11 @@ public interface ProductOrderService {
      * @return
      */
     String queryProductOrderState(String outTradeNo);
+
+    /**
+     * 队列监听，定时关单
+     * @param orderMessage
+     * @return
+     */
+    boolean closeProductOrder(OrderMessage orderMessage);
 }

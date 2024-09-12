@@ -27,6 +27,7 @@ import net.xdclass.util.JsonData;
 import net.xdclass.vo.CouponRecordVO;
 import net.xdclass.vo.OrderItemVO;
 import net.xdclass.vo.ProductOrderAddressVO;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -378,5 +379,43 @@ public class ProductOrderServiceImpl<rabbitTemplate> implements ProductOrderServ
         } else {
             return productOrderDO.getState();
         }
+    }
+
+    /**
+     * 定时关单
+     *
+     * @param orderMessage
+     * @return
+     */
+    @Override
+    public boolean closeProductOrder(OrderMessage orderMessage) {
+        //查询当前订单
+        ProductOrderDO productOrderDO = productOrderMapper.selectOne(new QueryWrapper<ProductOrderDO>().eq("out_trade_no", orderMessage.getOutTradeNo()));
+        if (productOrderDO == null) { //订单不存在
+            log.warn("直接确认消息，订单不存在:{}", orderMessage);
+            return true;
+        }
+        if (productOrderDO.getState().equalsIgnoreCase(ProductOrderStateEnum.PAY.name())) {  //已经支付
+            log.info("直接确认消息,订单已经支付:{}", orderMessage);
+            return true;
+        }
+
+
+        //本地取消订单前,向第三方支付查询订单是否真的未支付  TODO
+
+        String payResult = "";
+
+        //结果为空，则未支付成功，本地取消订单(修改订单状态)
+        if(StringUtils.isBlank(payResult)){
+            productOrderMapper.updateOrderPayState(productOrderDO.getOutTradeNo(),ProductOrderStateEnum.CANCEL.name(),ProductOrderStateEnum.NEW.name());
+            log.info("结果为空，则未支付成功，本地取消订单:{}",orderMessage);
+            return true;
+        }else {
+            //支付成功，主动的把订单状态改成UI就支付，造成该原因的情况可能是支付通道回调有问题
+            log.warn("支付成功，主动的把订单状态改成UI就支付，造成该原因的情况可能是支付通道回调有问题:{}",orderMessage);
+            productOrderMapper.updateOrderPayState(productOrderDO.getOutTradeNo(),ProductOrderStateEnum.PAY.name(),ProductOrderStateEnum.NEW.name());
+            return true;
+        }
+
     }
 }

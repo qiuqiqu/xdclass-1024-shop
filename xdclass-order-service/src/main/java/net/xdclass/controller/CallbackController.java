@@ -32,7 +32,7 @@ public class CallbackController {
 
 
     /**
-     * 支付回调通知 post方式
+     * 支付成功 回调通知
      * @param request
      * @param response
      * @return

@@ -20,7 +20,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 
-
+/**
+ * 阿里支付相关 查询 功能
+ */
 @Slf4j
 @Service
 public class AlipayStrategy implements PayStrategy {
@@ -29,6 +31,11 @@ public class AlipayStrategy implements PayStrategy {
     private PayUrlConfig payUrlConfig;
 
 
+    /**
+     * 支付宝  支付功能
+     * @param payInfoVO
+     * @return
+     */
     @Override
     public String unifiedorder(PayInfoVO payInfoVO) {
 

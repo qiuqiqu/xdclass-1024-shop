@@ -4,7 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
+import net.xdclass.component.PayFactory;
 import net.xdclass.config.RabbitMQConfig;
+import net.xdclass.constant.TimeConstant;
 import net.xdclass.enums.*;
 import net.xdclass.exception.BizException;
 import net.xdclass.feign.CouponFeignSerivce;
@@ -26,6 +28,7 @@ import net.xdclass.util.CommonUtil;
 import net.xdclass.util.JsonData;
 import net.xdclass.vo.CouponRecordVO;
 import net.xdclass.vo.OrderItemVO;
+import net.xdclass.vo.PayInfoVO;
 import net.xdclass.vo.ProductOrderAddressVO;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -63,6 +66,9 @@ public class ProductOrderServiceImpl<rabbitTemplate> implements ProductOrderServ
 
     @Autowired
     RabbitMQConfig rabbitConfig;
+    
+    @Autowired
+    PayFactory payFactory;
 
     /**
      * * 防重提交
@@ -121,13 +127,37 @@ public class ProductOrderServiceImpl<rabbitTemplate> implements ProductOrderServ
         //创建订单项
         this.saveProductOrderItems(orderOutTradeNo, productOrderDO.getId(), orderItemList);
 
-        //发送延迟消息，用于自动关单 TODO
+        //发送延迟消息，用于自动关单
         OrderMessage orderMessage = new OrderMessage();
         orderMessage.setOutTradeNo(orderOutTradeNo);
         rabbitTemplate.convertAndSend(rabbitConfig.getEventExchange(), rabbitConfig.getOrderCloseDelayRoutingKey(), orderMessage);
 
-        //创建支付  TODO
-        return null;
+        //创建支付
+        PayInfoVO payInfoVO = new PayInfoVO();
+        //订单号
+        payInfoVO.setOutTradeNo(orderOutTradeNo);
+        //订单总金额
+        payInfoVO.setPayFee(productOrderDO.getPayAmount());
+        //支付类型 微信-支付宝-银行-其他
+        payInfoVO.setPayType(orderRequest.getPayType());
+        //端类型 APP/H5/PC
+        payInfoVO.setClientType(orderRequest.getClientType());
+        //标题
+        payInfoVO.setTitle(orderItemList.get(0).getProductTitle());
+        //描述
+        payInfoVO.setDescription("");
+        //订单支付超时时间，毫秒   30分
+        payInfoVO.setOrderPayTimeoutMills(TimeConstant.ORDER_PAY_TIMEOUT_MILLS);
+
+        String payResult = payFactory.pay(payInfoVO);
+        if(StringUtils.isNotBlank(payResult)){
+            log.info("创建支付订单成功:payInfoVO={},payResult={}",payInfoVO,payResult);
+            return JsonData.buildSuccess(payResult);
+        }else {
+            log.error("创建支付订单失败:payInfoVO={},payResult={}",payInfoVO,payResult);
+            return JsonData.buildResult(BizCodeEnum.PAY_ORDER_FAIL);
+        }
+
     }
 
     /**
@@ -402,9 +432,11 @@ public class ProductOrderServiceImpl<rabbitTemplate> implements ProductOrderServ
         }
 
 
-        //本地取消订单前,向第三方支付查询订单是否真的未支付  TODO
-
-        String payResult = "";
+        //本地取消订单前,向第三方支付查询订单是否真的未支付
+        PayInfoVO payInfoVO = new PayInfoVO();
+        payInfoVO.setPayType(productOrderDO.getPayType());
+        payInfoVO.setOutTradeNo(productOrderDO.getOutTradeNo());
+        String payResult  = payFactory.queryPaySuccess(payInfoVO);;
 
         //结果为空，则未支付成功，本地取消订单(修改订单状态)
         if(StringUtils.isBlank(payResult)){

@@ -218,7 +218,6 @@ public class ProductOrderServiceImpl<rabbitTemplate> implements ProductOrderServ
         productOrderDO.setTotalAmount(orderRequest.getTotalAmount());
         productOrderDO.setState(ProductOrderStateEnum.NEW.name());
         ProductOrderTypeEnum.valueOf(orderRequest.getPayType()).name();
-        productOrderDO.setPayType(ProductOrderPayTypeEnum.valueOf(orderRequest.getPayType()).name());
 
         productOrderDO.setReceiverAddress(JSON.toJSONString(addressVO));
 

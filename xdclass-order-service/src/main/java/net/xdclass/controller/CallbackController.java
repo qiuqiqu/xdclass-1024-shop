@@ -44,6 +44,7 @@ public class CallbackController {
         log.info("支付宝回调通知结果:{}",paramsMap);
         //调用SDK验证签名
         try {
+            //验证签名
             boolean signVerified = AlipaySignature.rsaCheckV1(paramsMap, AlipayConfig.ALIPAY_PUB_KEY, AlipayConfig.CHARSET, AlipayConfig.SIGN_TYPE);
             if(signVerified){
 

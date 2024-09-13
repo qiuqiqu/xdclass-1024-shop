@@ -32,9 +32,9 @@ public interface ProductOrderService {
 
     /**
      * 支付结果回调通知
-     * @param alipay
+     * @param payType
      * @param paramsMap
      * @return
      */
-    JsonData handlerOrderCallbackMsg(ProductOrderPayTypeEnum alipay, Map<String, String> paramsMap);
+    JsonData handlerOrderCallbackMsg(ProductOrderPayTypeEnum payType, Map<String, String> paramsMap);
 }

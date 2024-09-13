@@ -36,6 +36,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -417,5 +418,16 @@ public class ProductOrderServiceImpl<rabbitTemplate> implements ProductOrderServ
             return true;
         }
 
+    }
+
+    /**
+     * 支付结果回调通知
+     * @param alipay
+     * @param paramsMap
+     * @return
+     */
+    @Override
+    public JsonData handlerOrderCallbackMsg(ProductOrderPayTypeEnum alipay, Map<String, String> paramsMap) {
+        return null;
     }
 }

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Api("订单模块")
@@ -35,9 +36,19 @@ public class ProductOrderController {
     private ProductOrderService orderService;
 
 
+    @ApiOperation("分页查询我的订单列表")
+    @GetMapping("page")
+    public JsonData pageCouponList(
+            @ApiParam(value = "当前页") @RequestParam(value = "page", defaultValue = "1") int page,
+            @ApiParam(value = "每页显示多少条") @RequestParam(value = "size", defaultValue = "10") int size,
+            @ApiParam(value = "订单状态") @RequestParam(value = "state", required = false) String state) {
+        Map<String,Object> pageResult= orderService.page(page,size,state);
+        return JsonData.buildSuccess(pageResult);
+    }
+
     /**
      * 查询订单状态
-     *
+     * <p>
      * 此接口没有登录拦截，可以增加一个秘钥进行rpc通信
      *
      * @param outTradeNo
@@ -45,45 +56,45 @@ public class ProductOrderController {
      */
     @ApiOperation("查询订单状态")
     @GetMapping("query_state")
-    public JsonData queryProductOrderState(@ApiParam("订单号") @RequestParam("out_trade_no")String outTradeNo){
+    public JsonData queryProductOrderState(@ApiParam("订单号") @RequestParam("out_trade_no") String outTradeNo) {
 
         String state = orderService.queryProductOrderState(outTradeNo);
 
-        return StringUtils.isBlank(state)?JsonData.buildResult(BizCodeEnum.ORDER_CONFIRM_NOT_EXIST):JsonData.buildSuccess(state);
+        return StringUtils.isBlank(state) ? JsonData.buildResult(BizCodeEnum.ORDER_CONFIRM_NOT_EXIST) : JsonData.buildSuccess(state);
 
     }
 
     @ApiOperation("提交订单")
     @PostMapping("confirm")
-    public void confirmOrder(@ApiParam("订单对象") @RequestBody ConfirmOrderRequest orderRequest, HttpServletResponse response){
+    public void confirmOrder(@ApiParam("订单对象") @RequestBody ConfirmOrderRequest orderRequest, HttpServletResponse response) {
 
         JsonData jsonData = orderService.confirmOrder(orderRequest);
 
-        if(jsonData.getCode() == 0){
+        if (jsonData.getCode() == 0) {
 
             String client = orderRequest.getClientType();
             String payType = orderRequest.getPayType();
 
             //如果是支付宝网页支付，都是跳转网页，APP除外
-            if(payType.equalsIgnoreCase(ProductOrderPayTypeEnum.ALIPAY.name())){
+            if (payType.equalsIgnoreCase(ProductOrderPayTypeEnum.ALIPAY.name())) {
 
-                log.info("创建支付宝订单成功:{}",orderRequest.toString());
+                log.info("创建支付宝订单成功:{}", orderRequest.toString());
 
-                if(client.equalsIgnoreCase(ClientType.H5.name())){
-                    writeData(response,jsonData);
+                if (client.equalsIgnoreCase(ClientType.H5.name())) {
+                    writeData(response, jsonData);
 
-                }else if(client.equalsIgnoreCase(ClientType.APP.name())){
+                } else if (client.equalsIgnoreCase(ClientType.APP.name())) {
                     //APP SDK支付  TODO
                 }
 
-            } else if(payType.equalsIgnoreCase(ProductOrderPayTypeEnum.WECHAT.name())){
+            } else if (payType.equalsIgnoreCase(ProductOrderPayTypeEnum.WECHAT.name())) {
 
                 //微信支付 TODO
             }
 
         } else {
 
-            log.error("创建订单失败{}",jsonData.toString());
+            log.error("创建订单失败{}", jsonData.toString());
 
         }
     }
@@ -95,8 +106,8 @@ public class ProductOrderController {
             response.getWriter().write(jsonData.getData().toString());
             response.getWriter().flush();
             response.getWriter().close();
-        }catch (IOException e){
-            log.error("写出Html异常：{}",e);
+        } catch (IOException e) {
+            log.error("写出Html异常：{}", e);
         }
 
     }
@@ -110,11 +121,11 @@ public class ProductOrderController {
     @GetMapping("test_pay")
     public void testAlipay(HttpServletResponse response) throws AlipayApiException, IOException {
 
-        HashMap<String,String> content = new HashMap<>();
+        HashMap<String, String> content = new HashMap<>();
         //商户订单号,64个字符以内、可包含字母、数字、下划线；需保证在商户端不重复
         String no = UUID.randomUUID().toString();
 
-        log.info("订单号:{}",no);
+        log.info("订单号:{}", no);
         content.put("out_trade_no", no);
 
         content.put("product_code", "FAST_INSTANT_TRADE_PAY");
@@ -137,9 +148,9 @@ public class ProductOrderController {
         request.setNotifyUrl(payUrlConfig.getAlipayCallbackUrl());
         request.setReturnUrl(payUrlConfig.getAlipaySuccessReturnUrl());
 
-        AlipayTradeAppPayResponse alipayResponse  = AlipayConfig.getInstance().pageExecute(request);
+        AlipayTradeAppPayResponse alipayResponse = AlipayConfig.getInstance().pageExecute(request);
 
-        if(alipayResponse.isSuccess()){
+        if (alipayResponse.isSuccess()) {
             System.out.println("调用成功");
 
             String form = alipayResponse.getBody();

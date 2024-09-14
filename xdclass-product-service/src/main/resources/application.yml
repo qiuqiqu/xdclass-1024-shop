@@ -55,7 +55,7 @@ mqconfig:
   #消息过期，进入释放队列的key
   stock_release_routing_key: stock.release.routing.key
 
-  #消息过期时间,毫秒,测试改为15秒 临时改为6分钟
-  ttl: 360000
+  #消息过期时间,毫秒,测试改为15秒 临时改为3分钟
+  ttl: 100000
 
 

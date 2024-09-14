@@ -115,14 +115,15 @@ public class CouponRecordServiceImpl implements CouponRecordService {
         int updateRows = couponRecordMapper.lockUseStateBatch(loginUser.getId(), CouponStateEnum.USED.name(), lockCouponRecordIds);
 
         //task表插入记录
-        List<CouponTaskDO> couponTaskDOList = lockCouponRecordIds.stream().map(obj -> {
+        List<CouponTaskDO> couponTaskDOList =  lockCouponRecordIds.stream().map(obj->{
             CouponTaskDO couponTaskDO = new CouponTaskDO();
-            couponTaskDO.setCouponRecordId(obj);
             couponTaskDO.setCreateTime(new Date());
             couponTaskDO.setOutTradeNo(orderOutTradeNo);
+            couponTaskDO.setCouponRecordId(obj);
             couponTaskDO.setLockState(StockTaskStateEnum.LOCK.name());
             return couponTaskDO;
         }).collect(Collectors.toList());
+
         int insertRows = couponTaskMapper.insertBatch(couponTaskDOList);
 
         log.info("优惠券记录锁定updateRows={}", updateRows);

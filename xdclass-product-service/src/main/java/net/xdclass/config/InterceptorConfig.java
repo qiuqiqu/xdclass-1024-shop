@@ -23,7 +23,7 @@ public class InterceptorConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/cart/*/**")
 
                 //排查不拦截的路径
-                .excludePathPatterns("");
+                .excludePathPatterns("/api/order/v1/query_state");
 
     }
 }

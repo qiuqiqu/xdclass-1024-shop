@@ -25,13 +25,11 @@
     <insert id="insertBatch" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
 
         insert into coupon_task
-        (
-        <include refid="Base_Column_List_No_Id"/>
-        )
+        ( <include refid="Base_Column_List_No_Id"/> )
 
         values
 
-        <foreach collection="couponTaskList" item="item" index="index" separator=",">
+        <foreach collection="couponTaskDOList" item="item" index="index" separator=",">
             (
             #{item.couponRecordId},
             #{item.createTime},
@@ -39,6 +37,8 @@
             #{item.lockState}
             )
         </foreach>
+
+
 
     </insert>
 

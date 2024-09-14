@@ -217,7 +217,7 @@ public class ProductOrderServiceImpl<rabbitTemplate> implements ProductOrderServ
         //总价，未使用优惠券的价格
         productOrderDO.setTotalAmount(orderRequest.getTotalAmount());
         productOrderDO.setState(ProductOrderStateEnum.NEW.name());
-        ProductOrderTypeEnum.valueOf(orderRequest.getPayType()).name();
+        productOrderDO.setPayType(ProductOrderPayTypeEnum.valueOf(orderRequest.getPayType()).name());
 
         productOrderDO.setReceiverAddress(JSON.toJSONString(addressVO));
 
@@ -412,7 +412,7 @@ public class ProductOrderServiceImpl<rabbitTemplate> implements ProductOrderServ
     }
 
     /**
-     * 定时关单
+     * 定时关单(修改订单状态)
      *
      * @param orderMessage
      * @return

@@ -12,6 +12,7 @@ import org.apache.ibatis.annotations.Param;
 public interface ProductMapper extends BaseMapper<ProductDO> {
     /**
      * 锁定商品库存
+     *
      * @param productId
      * @param buyNum
      * @return
@@ -23,5 +24,5 @@ public interface ProductMapper extends BaseMapper<ProductDO> {
      * @param productId
      * @param buyNum
      */
-    void unlockProductStock(Long productId, Integer buyNum);
+    void unlockProductStock(@Param("productId")Long productId, @Param("buyNum")Integer buyNum);
 }

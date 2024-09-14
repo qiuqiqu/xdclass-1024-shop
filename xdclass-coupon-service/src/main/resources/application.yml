@@ -58,5 +58,5 @@ mqconfig:
   coupon_release_routing_key: coupon.release.routing.key
 
   #消息过期时间,毫秒,测试改为15秒
-  ttl: 15000
+  ttl: 100000
 

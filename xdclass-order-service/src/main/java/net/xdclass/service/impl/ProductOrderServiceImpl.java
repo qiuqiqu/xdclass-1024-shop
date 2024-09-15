@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.component.PayFactory;
 import net.xdclass.config.RabbitMQConfig;
+import net.xdclass.constant.CacheKey;
 import net.xdclass.constant.TimeConstant;
 import net.xdclass.enums.*;
 import net.xdclass.exception.BizException;
@@ -30,6 +31,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -64,6 +67,9 @@ public class ProductOrderServiceImpl<rabbitTemplate> implements ProductOrderServ
     @Autowired
     PayFactory payFactory;
 
+    @Autowired
+    StringRedisTemplate redisTemplate;
+
     /**
      * * 防重提交
      * * 用户微服务-确认收货地址
@@ -85,6 +91,21 @@ public class ProductOrderServiceImpl<rabbitTemplate> implements ProductOrderServ
     public JsonData confirmOrder(ConfirmOrderRequest orderRequest) {
         //获取当前登录用户
         LoginUser loginUser = LoginInterceptor.threadLocal.get();
+
+        //token令牌验证 防止订单重复提交
+        String orderToken = orderRequest.getToken();
+        if(StringUtils.isBlank(orderToken)){
+            throw new BizException(BizCodeEnum.ORDER_CONFIRM_TOKEN_NOT_EXIST);
+        }
+
+
+        String script = "if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end";
+        //原子操作 校验令牌，删除令牌
+        Long result = redisTemplate.execute(new DefaultRedisScript<>(script,Long.class), Arrays.asList(String.format(CacheKey.SUBMIT_ORDER_TOKEN_KEY,loginUser.getId())),orderToken);
+        if(result == 0L){
+            throw new BizException(BizCodeEnum.ORDER_CONFIRM_TOKEN_EQUAL_FAIL);
+        }
+
         //生成订单号
         String orderOutTradeNo = CommonUtil.getStringNumRandom(32);
         //获取用户收货地址

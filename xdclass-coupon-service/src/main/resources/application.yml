@@ -9,7 +9,11 @@
 #    nacos:
 #      discovery:
 #        server-addr: localhost:8848
-#
+##Sentinel配置
+#    sentinel:
+#      transport:
+#        dashboard: localhost:8858
+#        port: 9999
 ##数据库配置
 #  datasource:
 #    driver-class-name: com.mysql.cj.jdbc.Driver

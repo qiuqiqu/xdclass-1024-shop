@@ -14,6 +14,15 @@
 #      transport:
 #        dashboard: localhost:8858
 #        port: 9999
+#      #流控规则持久化到nacos配置中心
+#      datasource:
+#        ds1:
+#          nacos:
+#            server-addr: localhost:8848
+#            data-id: ${spring.application.name}.json
+#            group-id: DEFAULT_GROUP
+#            data-type: json
+#            rule-type: flow
 ##数据库配置
 #  datasource:
 #    driver-class-name: com.mysql.cj.jdbc.Driver

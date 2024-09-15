@@ -4,6 +4,7 @@ package net.xdclass.service;
 import net.xdclass.enums.ProductOrderPayTypeEnum;
 import net.xdclass.model.OrderMessage;
 import net.xdclass.request.ConfirmOrderRequest;
+import net.xdclass.request.RepayOrderRequest;
 import net.xdclass.util.JsonData;
 
 import java.util.Map;
@@ -46,4 +47,11 @@ public interface ProductOrderService {
      * @return
      */
     Map<String, Object> page(int page, int size, String state);
+
+    /**
+     * 订单二次支付
+     * @param repayOrderRequest
+     * @return
+     */
+    JsonData repay(RepayOrderRequest repayOrderRequest);
 }

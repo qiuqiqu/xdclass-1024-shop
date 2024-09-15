@@ -65,7 +65,7 @@ alipay:
   success_return_url: https://xdclass.net
 
   #支付宝通知回调接口
-  callback_url: http://25wxdk.natappfree.cc/api/callback/order/v1/alipay
+  callback_url: http://25wxdk.natappfree.cc/order-server/api/callback/order/v1/alipay
 
 
 
